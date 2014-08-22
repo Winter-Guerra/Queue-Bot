@@ -1,0 +1,16 @@
+{
+  "name": "RollerCoasterQueue",
+  "version": "0.1.0",
+  "description": "A cloud-based program that will manage event lines via text-messages.",
+  "main": "server.coffee",
+  "dependencies": {
+    "fs-extra": "^0.11.0",
+    "twilio": "^1.6.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Winter Guerra",
+  "license": "CC-BY-SA"
+}
