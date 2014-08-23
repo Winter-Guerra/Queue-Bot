@@ -57,12 +57,14 @@ app.get '/', (req, res) ->
 	res.send('Welcome to the Queuebot homepage!')
 
 # Listen for incoming SMS messages
-app.post '/incomingSMS', (request, response) ->
+app.post '/incomingSMS/', (request, response) ->
 	response.header('Content-Type', 'text/xml')
+
+	console.log "Req", request.param('From'), request.param('Body')
 
 	# Initialize basic details of SMS message
 	userPhoneNumber = request.param('From')
-	body = request.param('Body').trim()
+	body = request.param('Body')
 
 	# Check that the SMS is able to get the user's phone number
 	console.log "Got message from user: ", userPhoneNumber
