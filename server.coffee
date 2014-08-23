@@ -52,7 +52,7 @@ i X = insert kerberos to end of list\n
 
 userPlaceInQueue = (phoneNumber) ->
 	# Loop through queue and look for the phoneNumber
-	for index in [0...phoneNumber.length]
+	for index in [0...queue.length]
 		number = queue[index].phoneNumber
 		
 		if number is phoneNumber
