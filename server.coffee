@@ -11,6 +11,8 @@ twilio = require('twilio')
 fs = require 'fs-extra'
 express = require 'express'
 
+port = process.env.PORT || 3000
+
 # Initialize Twilio API
 {accountSid, authToken, serverPhoneNumber} = fs.readJsonSync('./twilio_account_info.json')
 
@@ -144,7 +146,7 @@ app.post '/incomingSMS', (request, response) ->
 				response.send "<Response><Sms>#{getQueueData()}</Response></Sms>"
 				return
 
-app.listen(80)
+app.listen(port)
 
 
 	# If the message came from a user's cellphone, 
