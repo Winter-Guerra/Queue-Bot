@@ -50,6 +50,18 @@ i X = insert kerberos to end of list\n
 "
 	return returnString
 
+userPlaceInQueue = (phoneNumber) ->
+	# Loop through queue and look for the phoneNumber
+	for index in [0...phoneNumber.length]
+		number = queue[index].phoneNumber
+		
+		if number is phoneNumber
+			return index
+	return null
+
+
+
+
 
 # Start up a webserver
 app = express()
