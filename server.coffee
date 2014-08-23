@@ -117,7 +117,8 @@ app.post '/incomingSMS', (request, response) ->
 		switch command
 			# Shifting the Queue along
 			when (/n/i).test(command)
-				queue.shift()
+				if queue.length > 0
+					queue.shift()
 				response.send "<Response><Sms>#{getQueueData()}</Response></Sms>"
 				return
 
@@ -128,9 +129,9 @@ app.post '/incomingSMS', (request, response) ->
 					reponse.send "<Response><Sms>ERROR: Supply an queue index to delete. I.E. 'r b'.</Response></Sms>"
 				# Map the letter to a zero indexed number
 				queueIndex = (queueIndex.charCodeAt(0) - 97)
-				delete queue[queueIndex]
+				queue.splice(queueIndex,1)
 
-				response.send getQueueData()
+				response.send "<Response><Sms>#{getQueueData()}</Response></Sms>"
 				return
 
 			# Adding a person
