@@ -11,6 +11,26 @@ twilio = require('twilio')
 fs = require 'fs-extra'
 
 # Initialize Twilio API
+{accountSid, authToken, serverPhoneNumber} = fs.readJsonSync('./twilio_account_info.json')
 
 client = new twilio.RestClient(accountSid, authToken)
+
+# ## Default Admin Numbers
+
+admins = [
+	'9174357128', # Winter
+	'9073472182', # Jaguar
+]
+
+
+
+messageOptions = {
+    to:'+19174357128',
+    from: serverPhoneNumber,
+    body:'This is a test of the TXT messaging capability of Twilio.'
+}
+
+client.messages.create messageOptions, (error, message) ->
+    if error
+        console.log(error.message)
 
