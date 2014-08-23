@@ -10,6 +10,7 @@
 twilio = require('twilio')
 fs = require 'fs-extra'
 express = require 'express'
+bodyParser = require('body-parser')
 
 port = process.env.PORT || 3000
 
@@ -53,12 +54,14 @@ i X = insert kerberos to end of list\n
 # Start up a webserver
 app = express()
 
-app.configure () ->
-	app.use(express.favicon())
-	app.use(express.logger('dev'))
-	app.use(express.bodyParser())
-	app.use(express.methodOverride())
-	app.use(express.urlencoded())
+# parse application/x-www-form-urlencoded
+app.use(bodyParser.urlencoded({ extended: false }))
+
+# parse application/json
+app.use(bodyParser.json())
+
+# parse application/vnd.api+json as json
+app.use(bodyParser.json({ type: 'application/vnd.api+json' }))
 
 app.get '/', (req, res) ->
 	res.send('Welcome to the Queuebot homepage!')
