@@ -9,6 +9,7 @@
 
 twilio = require('twilio')
 fs = require 'fs-extra'
+express = require 'express'
 
 # Initialize Twilio API
 {accountSid, authToken, serverPhoneNumber} = fs.readJsonSync('./twilio_account_info.json')
@@ -18,19 +19,137 @@ client = new twilio.RestClient(accountSid, authToken)
 # ## Default Admin Numbers
 
 admins = [
-	'9174357128', # Winter
-	'9073472182', # Jaguar
+	'19174357128', # Winter
+	'19073472182', # Jaguar
 ]
 
+# ## Initialize the Queue
+
+queue = []
+
+getQueueData = () ->
+	# List the top 5 users in the queue
+	nextUsers = queue[0...5]
+	returnString = "Next users in line"
+	letterIndex = null
+	for user in nextUsers
+		letterIndex = String.fromCharCode(97 + nextUsers.indexOf(user))
+		returnString = "#{returnString}\n
+#{letterIndex}). #{user.userName}"
+
+	# Now append docs
+	returnString = "#{returnString}\n
+------\n
+Valid commands are:\n
+n = next\n
+r X = remove index X from list\n
+i X = insert kerberos to end of list\n
+"
+	return returnString
 
 
-messageOptions = {
-    to:'+19174357128',
-    from: serverPhoneNumber,
-    body:'This is a test of the TXT messaging capability of Twilio.'
-}
+# Start up a webserver
+app = express()
 
-client.messages.create messageOptions, (error, message) ->
-    if error
-        console.log(error.message)
+app.get '/', (req, res) ->
+	res.send('Welcome to the Queuebot homepage!')
+
+# Listen for incoming SMS messages
+app.post '/incomingSMS', (request, response) ->
+	response.header('Content-Type', 'text/xml')
+
+	# Initialize basic details of SMS message
+	userPhoneNumber = request.param('From')
+	body = request.param('Body').trim()
+
+	# Check that the SMS is able to get the user's phone number
+	console.log "Got message from user: ", userPhoneNumber
+	console.log "Got body: ", body
+
+	# Check if the incoming message originated from an admin phone
+	isAdmin = (userPhoneNumber in admins)
+	
+	if not isAdmin
+		
+		# If not, check if we should add this number to the admin list by checking for 'make admin'
+		if (/make admin/i).test(body)
+			admins.push userPhoneNumber
+			response.send "<Response><Sms>Admin phone number #{userPhoneNumber} added successfully to list of admins!</Sms></Response>"
+			return
+		
+		# If this is just going to be a regular user, then log their name and phone number into the queue
+
+		# Check that they are not already in the queue
+		if userPlaceInQueue(userPhoneNumber)
+			response.send "<Response><Sms>You are already in the queue at place #{userPlaceInQueue(userPhoneNumber)}.</Sms></Response>"
+			return
+
+		# Check that they supplied a name
+		userName = null
+		if (/[a-zA-Z]*/).test(body)
+			userName = body
+		else
+			# Since they did not supply a name, use their phone number
+			userName = userPhoneNumber
+
+		queuedUser =
+			name: userName
+			phoneNumber: userPhoneNumber
+
+		# Push the user onto the queue
+		queue.push queuedUser
+
+		response.send "<Response><Sms>User #{userName} added to the queue. Current position: #{queue.length}. Enjoy the party! We will text you when it is your turn to ride.</Sms></Response>"
+		return
+
+	# If we have an SMS from an admin phone
+	if isAdmin
+
+		# Check which command the admin commanded us to do
+		# Valid commands are:
+		# r = remove from list
+		# i = insert to end of list
+		# n = next
+
+		# Grab the first argument of the sms
+		command = (/(^[a-zA-Z]*)/).exec(body)[1]
+
+		switch command
+			# Shifting the Queue along
+			when (/n/i).test(command)
+				queue.shift()
+				response.send "<Response><Sms>#{getQueueData()}</Response></Sms>"
+				return
+
+			# Removing a person
+			when (/r/i).test(command)
+				queueIndex = (/(^[a-zA-Z]*)/).exec(body)[2]
+				if not queueIndex
+					reponse.send "<Response><Sms>ERROR: Supply an queue index to delete. I.E. 'r b'.</Response></Sms>"
+				# Map the letter to a zero indexed number
+				queueIndex = (queueIndex.charCodeAt(0) - 97)
+				delete queue[queueIndex]
+
+				response.send getQueueData()
+				return
+
+			# Adding a person
+			when (/i/i).test(command)
+				userName = (/(^[a-zA-Z]*)/).exec(body)[2]
+				queuedUser =
+					name: userName
+					phoneNumber: userPhoneNumber
+				queue.push queuedUser
+				response.send "<Response><Sms>#{getQueueData()}</Response></Sms>"
+				return
+
+app.listen(80)
+
+
+	# If the message came from a user's cellphone, 
+
+
+
+
+
 

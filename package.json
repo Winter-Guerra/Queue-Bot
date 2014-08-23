@@ -3,8 +3,13 @@
   "version": "0.1.0",
   "description": "A cloud-based program that will manage event lines via text-messages.",
   "main": "server.coffee",
+  "repository" :
+    { "type" : "git"
+    , "url" : "https://github.com/Winter-Guerra/Queue-Bot"
+    },
   "dependencies": {
     "coffee-script": "^1.7.1",
+    "express": "^4.8.5",
     "fs-extra": "^0.11.0",
     "twilio": "^1.6.0"
   },
