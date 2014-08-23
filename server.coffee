@@ -53,6 +53,13 @@ i X = insert kerberos to end of list\n
 # Start up a webserver
 app = express()
 
+app.configure () ->
+	app.use(express.favicon())
+	app.use(express.logger('dev'))
+	app.use(express.bodyParser())
+	app.use(express.methodOverride())
+	app.use(express.urlencoded())
+
 app.get '/', (req, res) ->
 	res.send('Welcome to the Queuebot homepage!')
 
