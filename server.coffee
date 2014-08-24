@@ -42,14 +42,6 @@ getQueueData = () ->
 		returnString = "#{returnString}\n
 #{letterIndex}). #{user.userName}"
 
-	# Now append docs
-	returnString = "#{returnString}\n
-------\n
-Valid commands are:\n
-n = next\n
-r X = remove index X from list\n
-i X = insert kerberos to end of list\n
-"
 	return returnString
 
 userPlaceInQueue = (phoneNumber) ->
