@@ -150,7 +150,7 @@ Type h for command help."
 			resp.message "Queue:\n
 #{getQueueData()}\n
 Type h for command help."
-			response.send resp
+			response.send resp.toString()
 			return
 
 		when 'l', 'L'
@@ -159,7 +159,7 @@ Type h for command help."
 			unless (queue.length > 0)
 				console.log "Queue is empty"
 				resp.message "Queue is empty"
-				response.send resp
+				response.send resp.toString()
 				return
 			# list people in queue
 			resp = new twilio.TwimlResponse()
