@@ -182,6 +182,10 @@ add admin = add current phone to admin list"
 			response.send resp.toString()
 			return
 
+		else
+			resp = new twilio.TwimlResponse()
+			resp.message "Unrecognized admin command. Use 'h' to fetch the list of possible commands."
+
 serveRegularSMS = (userPhoneNumber, body, request, response) ->
 
 	# If not, check if we should add this number to the admin list by checking for 'make admin'
