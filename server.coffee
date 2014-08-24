@@ -227,7 +227,7 @@ serveRegularSMS = (userPhoneNumber, body, request, response) ->
 
 	# Queue the user
 	queuedUser =
-		name: userName
+		userName: userName
 		phoneNumber: userPhoneNumber
 	# Push the user onto the queue
 	queue.push queuedUser
