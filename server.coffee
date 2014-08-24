@@ -50,7 +50,7 @@ userPlaceInQueue = (phoneNumber) ->
 		queuedNumber = queue[index].phoneNumber
 		
 		if phoneNumber is queuedNumber
-			return index
+			return index+1
 	return null
 
 updatePeopleInQueue = () ->
