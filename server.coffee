@@ -11,6 +11,8 @@ twilio = require('twilio')
 fs = require 'fs-extra'
 express = require 'express'
 bodyParser = require('body-parser')
+CacheControl = require("express-cache-control")
+cache = new CacheControl().middleware
 
 port = process.env.PORT || 3000
 
@@ -241,6 +243,8 @@ Enjoy the party! We will text you when you can ride the EC roller coaster."
 
 # Start up a webserver
 app = express()
+
+app.use(cache("seconds", 0))
 
 # parse body of incoming requests
 app.use(bodyParser.urlencoded({ extended: false }))
