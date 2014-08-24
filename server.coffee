@@ -146,7 +146,7 @@ Type h for command help."
 			userName = body.match(/([a-zA-Z]+)/g)[1]
 			console.log "->insert person #{userName}"
 			queuedUser =
-				name: userName.concat('* No cell')
+				userName: userName.concat('* No cell')
 				phoneNumber: null # user does not have a phone number
 			queue.push queuedUser
 			resp = new twilio.TwimlResponse()
