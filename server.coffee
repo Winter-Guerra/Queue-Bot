@@ -354,16 +354,15 @@ app.post '/incomingSMS/', (request, response) ->
 
 	if not isAdmin
 		serveRegularSMS(userPhoneNumber, body, request, response)
-		return
 	# --------------------------
 	# Handle Admin access
 
 	# If we have an SMS from an admin phone
 	if isAdmin
 		serveAdminSMS(userPhoneNumber, body, request, response)
-		return
 
 	console.log "Queue:", queue
+	return
 
 		
 
