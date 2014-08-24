@@ -35,7 +35,7 @@ queue = []
 getQueueData = () ->
 	# List the top 5 users in the queue
 	nextUsers = queue[0...5]
-	returnString = "Next users in line"
+	returnString = ""
 	letterIndex = null
 	for user in nextUsers
 		letterIndex = String.fromCharCode(97 + nextUsers.indexOf(user))
@@ -156,7 +156,8 @@ Type h for command help."
 		when 'l', 'L'
 			console.log "->List queue"
 			resp = new twilio.TwimlResponse()
-			unless queue.length > 0
+			unless (queue.length > 0)
+				console.log "Queue is empty"
 				resp.message "Queue is empty"
 				response.send resp
 				return
