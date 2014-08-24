@@ -154,6 +154,11 @@ Type h for command help."
 			return
 
 		when 'l', "L"
+			resp = new twilio.TwimlResponse()
+			unless queue.length > 0
+				resp.message "Queue is empty"
+				response.send resp
+				return
 			# list people in queue
 			resp = new twilio.TwimlResponse()
 			resp.message "Queue:\n
