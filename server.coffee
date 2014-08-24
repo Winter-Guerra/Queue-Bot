@@ -363,6 +363,8 @@ app.post '/incomingSMS/', (request, response) ->
 		serveAdminSMS(userPhoneNumber, body, request, response)
 		return
 
+	console.log "Queue:", queue
+
 		
 
 app.listen(port)
