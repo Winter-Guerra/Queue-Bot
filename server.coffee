@@ -25,14 +25,14 @@ client = new twilio.RestClient(accountSid, authToken)
 # ## Default Admin Numbers
 
 admins = [
-	'+19174357128'#, # Winter
-	#'+19073472182', # Jaguar
+	'+19174357128', # Winter
+	'+19073472182', # Jaguar
 ]
 
 # ## Initialize the Queue
 queue = []
 oldTopQueue = []
-timeOfEachRide = 4 # minutes
+timeOfEachRide = 8 # minutes
 numberOfPeopletoUpdate = 5
 
 # List the top 5 users in the queue
@@ -85,6 +85,7 @@ updateOperatorsAndUsers = () ->
 #{userName}, you are now \##{placeInQueue} in line.\r\n
 ETA: #{ETA} minutes.\n
 Please find a EC roller coaster operator to get set up for your ride!\n
+We are on the 2nd floor of the EC fort, near the entrance stairs.\n
 WARNING: If not present, you will be removed from the queue."
 
 				client.sendMessage(messageOptions).done()
@@ -196,6 +197,16 @@ serveAdminSMS = (userPhoneNumber, body, request, response) ->
 
 			# Send empty response
 			resp = new twilio.TwimlResponse()
+			resp.message "
+#{userName} is now in line.\n
+Current position: #{queue.length}.\n
+ETA: #{ETA} minutes.\n
+BRING A CELLPHONE NEXT TIME!\n
+We will NOT text you when it is your turn.\n
+You will also NOT be able to check your ETA until you are in the top of the queue.\n
+WARNING: If not present, you will be removed from the queue.\n
+Meet at the 2nd floor of the EC fort near the entrance stairs when it is your turn.
+"
 			response.send resp.toString()
 
 			# Send updates to the operators and the users in the queue
