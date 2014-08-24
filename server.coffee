@@ -199,7 +199,7 @@ serveRegularSMS = (userPhoneNumber, body, request, response) ->
 	console.log "Regular user command:"
 
 	# If not, check if we should add this number to the admin list by checking for 'make admin'
-	if (/make admin/i).test(body)
+	if (/add admin/i).test(body)
 		console.log "->add admin"
 		admins.push userPhoneNumber
 		resp = new twilio.TwimlResponse()
