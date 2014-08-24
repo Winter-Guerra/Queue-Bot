@@ -13,6 +13,7 @@ express = require 'express'
 bodyParser = require('body-parser')
 CacheControl = require("express-cache-control")
 cache = new CacheControl().middleware
+_ = require('lodash')
 
 port = process.env.PORT || 3000
 
@@ -31,6 +32,7 @@ admins = [
 # ## Initialize the Queue
 
 queue = []
+oldTopQueue = []
 
 getQueueData = () ->
 	# List the top 5 users in the queue
@@ -54,6 +56,14 @@ userPlaceInQueue = (phoneNumber) ->
 	return null
 
 updatePeopleInQueue = () ->
+	# Only update people if the queue has shifted.
+	topQueue = queue[0...3]
+
+	if _.difference(topQueue, oldTopQueue).length is 0
+		return
+
+	oldTopQueue = topQueue
+
 	for person in queue[0...3]
 		{phoneNumber, userName} = person
 
@@ -134,11 +144,14 @@ Type h for command help."
 			# Map the letter to a zero indexed number
 			queueIndex = (name.charCodeAt(0) - 97)
 			queue.splice(queueIndex,1)
-
 			resp.message "Queue:
 #{getQueueData()}\n
 Type h for command help."
 			response.send resp.toString()
+
+			# Send updates to the next 3 people in the queue
+			updatePeopleInQueue()
+
 			return
 
 		# Adding a person's kerberos
@@ -154,6 +167,9 @@ Type h for command help."
 #{getQueueData()}\n
 Type h for command help."
 			response.send resp.toString()
+			# Send updates to the next 3 people in the queue
+			updatePeopleInQueue()
+
 			return
 
 		when 'l', 'L'
@@ -238,6 +254,9 @@ serveRegularSMS = (userPhoneNumber, body, request, response) ->
 	resp.message "#{userName} is now in line. Current position: #{queue.length}.\n
 Enjoy the party! We will text you when you can ride the EC roller coaster."
 	response.send resp.toString()
+
+	# Send updates to the next 3 people in the queue
+	updatePeopleInQueue()
 	return
 
 
