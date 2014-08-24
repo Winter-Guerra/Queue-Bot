@@ -55,7 +55,7 @@ userPlaceInQueue = (phoneNumber) ->
 
 updatePeopleInQueue = () ->
 	for person in queue[0...3]
-		{phoneNumber, name} = person
+		{phoneNumber, userName} = person
 
 		# Check that they actually have a phone that we can call them on.
 		if phoneNumber
