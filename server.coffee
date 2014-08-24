@@ -25,17 +25,17 @@ client = new twilio.RestClient(accountSid, authToken)
 # ## Default Admin Numbers
 
 admins = [
-	'+19174357128', # Winter
-	'+19073472182', # Jaguar
+	'+19174357128'#, # Winter
+	#'+19073472182', # Jaguar
 ]
 
 # ## Initialize the Queue
-
 queue = []
 oldTopQueue = []
+timeOfEachRide = 4 # minutes
 
+# List the top 5 users in the queue
 getQueueData = () ->
-	# List the top 5 users in the queue
 	nextUsers = queue[0...5]
 	returnString = ""
 	letterIndex = null
@@ -46,6 +46,7 @@ getQueueData = () ->
 
 	return returnString
 
+# Check the user's place in the queue
 userPlaceInQueue = (phoneNumber) ->
 	# Loop through queue and look for the phoneNumber
 	for index in [0...queue.length]
@@ -55,32 +56,67 @@ userPlaceInQueue = (phoneNumber) ->
 			return index+1
 	return null
 
-updatePeopleInQueue = () ->
+# Update the 5 people who are next in line.
+updateOperatorsAndUsers = () ->
+	numberOfPeopletoUpdate = 5
+
 	# Only update people if the queue has shifted.
-	topQueue = queue[0...3]
+	topQueue = queue[0...numberOfPeopletoUpdate]
 
-	if _.difference(topQueue, oldTopQueue).length is 0
-		return
+	if _.difference(topQueue, oldTopQueue).length isnt 0
 
-	oldTopQueue = topQueue
+		oldTopQueue = topQueue
 
-	for person in queue[0...3]
-		{phoneNumber, userName} = person
+		# Update the users in the top of the queue
+		for person in queue[0...numberOfPeopletoUpdate]
+			{phoneNumber, userName} = person
 
-		# Check that they actually have a phone that we can call them on.
-		if phoneNumber
+			# Check that they actually have a phone that we can call them on.
+			if phoneNumber
 
-			# Find the user's place in the queue
-			placeInQueue = userPlaceInQueue(phoneNumber)
+				# Find the user's place in the queue
+				placeInQueue = userPlaceInQueue(phoneNumber)
+				# Find ETA
+				ETA = placeInQueue * timeOfEachRide
+
+				messageOptions = 
+					to: phoneNumber
+					from: serverPhoneNumber
+					body: "
+#{userName}, you are now \##{placeInQueue} in line.\r\n
+ETA: #{ETA} minutes.\n
+Please find a EC roller coaster operator to get set up for your ride!\n
+WARNING: If not present, you will be removed from the queue."
+
+				client.sendMessage(messageOptions).done()
+
+		# Update the operators
+		for operatorNumber in admins
+			
+			messageOptions = 
+				to: operatorNumber
+				from: serverPhoneNumber
+				body: "
+Queue updated!\r\n
+#{getQueueData()}\r\n
+Type h for command help."
+
+			client.sendMessage(messageOptions).done()
+
+sendRemovalMsgToUser = (user) ->
+	if user
+		if user.phoneNumber
+			{phoneNumber, userName} = user
 
 			messageOptions = 
-				to: phoneNumber
+				to: user.phoneNumber
 				from: serverPhoneNumber
-				body: "#{userName}, you are now \##{placeInQueue} in line. Please find the EC roller coaster operators to get set up for your ride!"
-
-			promise = client.sendMessage(messageOptions)
-			
-			.done()
+				body: "
+#{userName}, you've been removed from the EC roller coaster queue!\r\n
+Please find the operators if you think that this has been a mistake.\r\n
+Otherwise, text your kerberos to this number to ride again!
+"
+			client.sendMessage(messageOptions).done()
 
 
 # Check which command the admin commanded us to do
@@ -115,16 +151,16 @@ serveAdminSMS = (userPhoneNumber, body, request, response) ->
 		when 'n', 'N'
 			console.log "->next"
 			if queue.length > 0
-				queue.shift()
-			# Send updates to the next 3 people in the queue
-			updatePeopleInQueue()
-			# Update the other admins about the queue
+				user = queue.shift()
 
 			resp = new twilio.TwimlResponse()
-			resp.message "Queue:
-#{getQueueData()}\n
-Type h for command help."
 			response.send resp.toString()
+
+			# Send updates to the operators and the users in the queue
+			updateOperatorsAndUsers()
+
+			# Send text to the person who has been removed from the queue
+			sendRemovalMsgToUser(user)
 			return
 
 		# Removing a person
@@ -138,15 +174,16 @@ Type h for command help."
 				return
 			# Map the letter to a zero indexed number
 			queueIndex = (name.charCodeAt(0) - 97)
-			queue.splice(queueIndex,1)
-			resp.message "Queue:
-#{getQueueData()}\n
-Type h for command help."
+			user = queue.splice(queueIndex,1)[0]
+			
+			# Send empty response
 			response.send resp.toString()
 
-			# Send updates to the next 3 people in the queue
-			updatePeopleInQueue()
+			# Send updates to the operators and the users in the queue
+			updateOperatorsAndUsers()
 
+			# Send text to the person who has been removed from the queue
+			sendRemovalMsgToUser(user)
 			return
 
 		# Adding a person's kerberos
@@ -157,13 +194,13 @@ Type h for command help."
 				userName: userName.concat('* No cell')
 				phoneNumber: null # user does not have a phone number
 			queue.push queuedUser
+
+			# Send empty response
 			resp = new twilio.TwimlResponse()
-			resp.message "Queue:
-#{getQueueData()}\n
-Type h for command help."
 			response.send resp.toString()
-			# Send updates to the next 3 people in the queue
-			updatePeopleInQueue()
+
+			# Send updates to the operators and the users in the queue
+			updateOperatorsAndUsers()
 
 			return
 
@@ -218,11 +255,19 @@ serveRegularSMS = (userPhoneNumber, body, request, response) ->
 		response.send resp.toString()
 		return
 
+	# ADD USER TO QUEUE
+
 	# Check that they are not already in the queue
 	place = userPlaceInQueue(userPhoneNumber)
 	if place isnt null
+		ETA = place * timeOfEachRide
 		resp = new twilio.TwimlResponse()
-		resp.message "You are already in the queue at place #{place}. Please wait your turn before re-adding yourself to the queue."
+		resp.message "
+You are already in line at place #{place}.\r\n
+ETA: #{ETA} minutes\r\n
+Please wait your turn before re-adding yourself to the queue.\r\n
+Standard message rates apply. Don't be dumbfuckers!
+"
 		response.send resp.toString()
 		return
 
@@ -244,14 +289,24 @@ serveRegularSMS = (userPhoneNumber, body, request, response) ->
 	queue.push queuedUser
 
 	console.log "->Add person to queue."
+	ETA = queue.length * timeOfEachRide
 
 	resp = new twilio.TwimlResponse()
-	resp.message "#{userName} is now in line. Current position: #{queue.length}.\n
-Enjoy the party! We will text you when you can ride the EC roller coaster."
+	resp.message "
+#{userName} is now in line.\n
+Current position: #{queue.length}.\n
+ETA: #{ETA} minutes.\n
+ENJOY THE PARTY! We will text you when you can ride the EC roller coaster.\n
+WARNING: If not present, you will be removed from the queue.\n
+Check your ETA by texting us your kerberos again.\n
+Standard message rates apply. Don't be dumbfuckers!
+"
 	response.send resp.toString()
 
 	# Send updates to the next 3 people in the queue
 	updatePeopleInQueue()
+	# Update Operators
+	updateOperators()
 	return
 
 
