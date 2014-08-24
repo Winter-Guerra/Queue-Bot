@@ -116,7 +116,7 @@ serveAdminSMS = (userPhoneNumber, body, request, response) ->
 			# Update the other admins about the queue
 
 			resp = new twilio.TwimlResponse()
-			resp.message "Queue:\n
+			resp.message "Queue:
 #{getQueueData()}\n
 Type h for command help."
 			response.send resp.toString()
@@ -135,7 +135,7 @@ Type h for command help."
 			queueIndex = (name.charCodeAt(0) - 97)
 			queue.splice(queueIndex,1)
 
-			resp.message "Queue:\n
+			resp.message "Queue:
 #{getQueueData()}\n
 Type h for command help."
 			response.send resp.toString()
@@ -150,7 +150,7 @@ Type h for command help."
 				phoneNumber: null # user does not have a phone number
 			queue.push queuedUser
 			resp = new twilio.TwimlResponse()
-			resp.message "Queue:\n
+			resp.message "Queue:
 #{getQueueData()}\n
 Type h for command help."
 			response.send resp.toString()
@@ -166,7 +166,7 @@ Type h for command help."
 				return
 			# list people in queue
 			resp = new twilio.TwimlResponse()
-			resp.message "Queue:\n
+			resp.message "Queue:
 #{getQueueData()}\n
 Type h for command help."
 			response.send resp.toString()
