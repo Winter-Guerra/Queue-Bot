@@ -54,7 +54,7 @@ userPlaceInQueue = (phoneNumber) ->
 	return null
 
 updatePeopleInQueue = () ->
-	for person in queue.slice(0,3)
+	for person in queue[0...3]
 		{phoneNumber, name} = person
 
 		# Find the user's place in the queue
@@ -166,7 +166,7 @@ Type h for command help."
 			resp.message "Queue:\n
 #{getQueueData()}\n
 Type h for command help."
-			response.send resp
+			response.send resp.toString
 			return
 
 		when 'h', 'H'
@@ -189,6 +189,7 @@ add admin = add current phone to admin list"
 			console.log "->Unrecognzed command"
 			resp = new twilio.TwimlResponse()
 			resp.message "Unrecognized admin command. Use 'h' to fetch the list of possible commands."
+			response.send resp.toString()
 
 serveRegularSMS = (userPhoneNumber, body, request, response) ->
 
