@@ -22,8 +22,8 @@ client = new twilio.RestClient(accountSid, authToken)
 # ## Default Admin Numbers
 
 admins = [
-	'19174357128', # Winter
-	'19073472182', # Jaguar
+	'+19174357128', # Winter
+	'+19073472182', # Jaguar
 ]
 
 # ## Initialize the Queue
@@ -53,26 +53,175 @@ i X = insert kerberos to end of list\n
 userPlaceInQueue = (phoneNumber) ->
 	# Loop through queue and look for the phoneNumber
 	for index in [0...queue.length]
-		number = queue[index].phoneNumber
+		queuedNumber = queue[index].phoneNumber
 		
-		if number is phoneNumber
+		if phoneNumber in queuedNumber
 			return index
 	return null
 
+updatePeopleInQueue = () ->
+	for person in queue.slice(0,3)
+		{phoneNumber, name} = person
+
+		# Find the user's place in the queue
+		placeInQueue = userPlaceInQueue(phoneNumber)
+
+		messageOptions = 
+			to: phoneNumber
+			from: serverPhoneNumber
+			body: "#{name}, you are now \##{placeInQueue} in line. Please find the EC roller coaster operators to get set up for your ride!"
+
+		promise = client.sendMessage(messageOptions)
+		
+		.then( 
+			(call) ->
+				console.log('Call success! Call SID: '+call.sid)
+			,(call) ->
+				console.error('Call failed!  Reason: '+error.message)
+		)
 
 
+# Check which command the admin commanded us to do
+# Valid commands are:
+	# r = remove from list
+	# i = insert to end of list
+	# n = next
+	# l = list queue
+	# h = help
+	# remove admin = remove current phone number from admin list
+
+serveAdminSMS = (userPhoneNumber, userName, body, request, response) ->
+
+	# Check for "Remove Admin"
+	if (/remove admin/i).test(body)
+		# Remove admin from the list
+		index = admins.indexOf userPhoneNumber
+		admins.splice(index,1)
+		resp = new twilio.TwimlResponse()
+		resp.message "Admin #{userPhoneNumber} removed from admin list."
+		response.send resp.toString()
+		return
+
+	# Check for one-char commands
+	command = body[0]
+
+	switch command
+		# Shifting the Queue along
+		when 'n', 'N'
+			if queue.length > 0
+				queue.shift()
+			# Send updates to the next 3 people in the queue
+			updatePeopleInQueue()
+			# Update the other admins about the queue
+
+			resp = new twilio.TwimlResponse()
+			resp.message "Queue:\n
+{getQueueData()}\n
+Type h for command help."
+			response.send resp.toString()
+			return
+
+		# Removing a person
+		when 'r', 'R'
+			secondArg = (/([a-zA-Z]+)/g).exec(body)[1] # Grab the second argument given
+			resp = new twilio.TwimlResponse()
+			if not secondArg or secondArg.length isnt 1
+				resp.message "ERROR: Supply an queue index to delete. I.E. 'r b'"
+				response.send resp.toString()
+				return
+			# Map the letter to a zero indexed number
+			queueIndex = (secondArg.charCodeAt(0) - 97)
+			queue.splice(queueIndex,1)
+
+			resp.message "Queue:\n
+{getQueueData()}\n
+Type h for command help."
+			response.send resp.toString()
+			return
+
+		# Adding a person's kerberos
+		when 'i', 'I'
+			userName = (/([a-zA-Z]+)/g).exec(body)[1]
+			queuedUser =
+				name: userName
+				phoneNumber: userPhoneNumber
+			queue.push queuedUser
+			resp = new twilio.TwimlResponse()
+			resp.message "Queue:\n
+{getQueueData()}\n
+Type h for command help."
+			response.send resp
+			return
+
+		when 'l', "L"
+			# list people in queue
+			resp = new twilio.TwimlResponse()
+			resp.message "Queue:\n
+{getQueueData()}\n
+Type h for command help."
+			response.send resp
+			return
+
+		when 'h', 'H'
+			# List commands
+			resp = new twilio.TwimlResponse()
+			resp.message "
+Commands:\n
+n = next\n
+l = list queue\n
+r n = remove nth person from list where n = a,b,c,d\n
+i name = insert name to end of list\n
+h = help\n
+remove admin = remove current phone from admin list\n
+add admin = add current phone to admin list"
+			response.send resp.toString()
+			return
+
+serveRegularSMS = (userPhoneNumber, userName, body, request, response) ->
+
+	# If not, check if we should add this number to the admin list by checking for 'make admin'
+	if (/make admin/i).test(body)
+		admins.push userPhoneNumber
+		resp = new twilio.TwimlResponse()
+		resp.message "Admin phone number #{userPhoneNumber} added successfully to list of admins!"
+		response.send resp.toString()
+		return
+
+	# Check that they are not already in the queue
+	if userPlaceInQueue(userPhoneNumber)
+		resp = new twilio.TwimlResponse()
+		resp.message "You are already in the queue at place #{userPlaceInQueue(userPhoneNumber)}."
+		response.send resp.toString()
+		return
+
+	# Check that they supplied a name
+	userName = null
+	if (/[a-zA-Z]*/).test(body)
+		userName = body
+	else
+		# Since they did not supply a name, use their phone number
+		userName = userPhoneNumber
+
+	# Queue the user
+	queuedUser =
+		name: userName
+		phoneNumber: userPhoneNumber
+	# Push the user onto the queue
+	queue.push queuedUser
+
+	resp = new twilio.TwimlResponse()
+	resp.message "#{userName} is now in line. Current position: #{queue.length}.\n
+Enjoy the party! We will text you when you can ride the EC roller coaster."
+	response.send resp.toString()
+	return
 
 
 # Start up a webserver
 app = express()
 
-# parse application/x-www-form-urlencoded
+# parse body of incoming requests
 app.use(bodyParser.urlencoded({ extended: false }))
-
-# parse application/json
 app.use(bodyParser.json())
-
-# parse application/vnd.api+json as json
 app.use(bodyParser.json({ type: 'application/vnd.api+json' }))
 
 app.get '/', (req, res) ->
@@ -80,103 +229,33 @@ app.get '/', (req, res) ->
 
 # Listen for incoming SMS messages
 app.post '/incomingSMS/', (request, response) ->
-	response.header('Content-Type', 'text/xml')
-
-	console.log "Req", request.param('From'), request.param('Body')
 
 	# Initialize basic details of SMS message
 	userPhoneNumber = request.param('From')
 	body = request.param('Body')
 
-	# Check that the SMS is able to get the user's phone number
-	console.log "Got message from user: ", userPhoneNumber
-	console.log "Got body: ", body
+	console.log "NEW SMS: ", userPhoneNumber, 
+
 
 	# Check if the incoming message originated from an admin phone
 	isAdmin = (userPhoneNumber in admins)
-	
+
+	# --------------------------
+	# Handle Regular user access
+
 	if not isAdmin
-		
-		# If not, check if we should add this number to the admin list by checking for 'make admin'
-		if (/make admin/i).test(body)
-			admins.push userPhoneNumber
-			response.send "<Response><Sms>Admin phone number #{userPhoneNumber} added successfully to list of admins!</Sms></Response>"
-			return
-		
-		# If this is just going to be a regular user, then log their name and phone number into the queue
-
-		# Check that they are not already in the queue
-		if userPlaceInQueue(userPhoneNumber)
-			response.send "<Response><Sms>You are already in the queue at place #{userPlaceInQueue(userPhoneNumber)}.</Sms></Response>"
-			return
-
-		# Check that they supplied a name
-		userName = null
-		if (/[a-zA-Z]*/).test(body)
-			userName = body
-		else
-			# Since they did not supply a name, use their phone number
-			userName = userPhoneNumber
-
-		queuedUser =
-			name: userName
-			phoneNumber: userPhoneNumber
-
-		# Push the user onto the queue
-		queue.push queuedUser
-
-		response.send "<Response><Sms>User #{userName} added to the queue. Current position: #{queue.length}. Enjoy the party! We will text you when it is your turn to ride.</Sms></Response>"
+		serveRegularSMS(userPhoneNumber, userName, body, request, response)
 		return
+	# --------------------------
+	# Handle Admin access
 
 	# If we have an SMS from an admin phone
 	if isAdmin
+		serveAdminSMS(userPhoneNumber, 'wguerra')
 
-		# Check which command the admin commanded us to do
-		# Valid commands are:
-		# r = remove from list
-		# i = insert to end of list
-		# n = next
-
-		# Grab the first argument of the sms
-		command = (/(^[a-zA-Z]*)/).exec(body)[1]
-
-		switch command
-			# Shifting the Queue along
-			when (/n/i).test(command)
-				if queue.length > 0
-					queue.shift()
-				response.send "<Response><Sms>#{getQueueData()}</Response></Sms>"
-				return
-
-			# Removing a person
-			when (/r/i).test(command)
-				queueIndex = (/(^[a-zA-Z]*)/).exec(body)[2]
-				if not queueIndex
-					reponse.send "<Response><Sms>ERROR: Supply an queue index to delete. I.E. 'r b'.</Response></Sms>"
-				# Map the letter to a zero indexed number
-				queueIndex = (queueIndex.charCodeAt(0) - 97)
-				queue.splice(queueIndex,1)
-
-				response.send "<Response><Sms>#{getQueueData()}</Response></Sms>"
-				return
-
-			# Adding a person
-			when (/i/i).test(command)
-				userName = (/(^[a-zA-Z]*)/).exec(body)[2]
-				queuedUser =
-					name: userName
-					phoneNumber: userPhoneNumber
-				queue.push queuedUser
-				response.send "<Response><Sms>#{getQueueData()}</Response></Sms>"
-				return
+		
 
 app.listen(port)
-
-
-	# If the message came from a user's cellphone, 
-
-
-
 
 
 
