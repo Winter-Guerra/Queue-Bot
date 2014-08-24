@@ -214,7 +214,7 @@ serveRegularSMS = (userPhoneNumber, body, request, response) ->
 		response.send resp.toString()
 		return
 
-	return "Existing place in queue:", userPlaceInQueue
+	console.log "Existing place in queue:", userPlaceInQueue
 
 	# Check that they supplied a name
 	userName = null
