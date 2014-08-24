@@ -209,7 +209,7 @@ serveRegularSMS = (userPhoneNumber, body, request, response) ->
 
 	# Check that they are not already in the queue
 	place = userPlaceInQueue(userPhoneNumber)
-	if place
+	if place isnt null
 		resp = new twilio.TwimlResponse()
 		resp.message "You are already in the queue at place #{place}. Please wait your turn before re-adding yourself to the queue."
 		response.send resp.toString()
