@@ -249,7 +249,8 @@ serveRegularSMS = (userPhoneNumber, body, request, response) ->
 	# If not, check if we should add this number to the admin list by checking for 'make admin'
 	if (/add admin/i).test(body)
 		console.log "->add admin"
-		admins.push userPhoneNumber
+		if userPhoneNumber not in admins
+			admins.push userPhoneNumber
 		resp = new twilio.TwimlResponse()
 		resp.message "Admin phone number #{userPhoneNumber} added successfully to list of admins!"
 		response.send resp.toString()
