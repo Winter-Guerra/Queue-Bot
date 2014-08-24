@@ -92,8 +92,11 @@ updatePeopleInQueue = () ->
 
 serveAdminSMS = (userPhoneNumber, body, request, response) ->
 
+	console.log "Admin command"
+
 	# Check for "Remove Admin"
 	if (/remove admin/i).test(body)
+		console.log "->Remove admin"
 		# Remove admin from the list
 		index = admins.indexOf userPhoneNumber
 		admins.splice(index,1)
@@ -108,6 +111,7 @@ serveAdminSMS = (userPhoneNumber, body, request, response) ->
 	switch command
 		# Shifting the Queue along
 		when 'n', 'N'
+			console.log "->next"
 			if queue.length > 0
 				queue.shift()
 			# Send updates to the next 3 people in the queue
@@ -116,13 +120,14 @@ serveAdminSMS = (userPhoneNumber, body, request, response) ->
 
 			resp = new twilio.TwimlResponse()
 			resp.message "Queue:\n
-{getQueueData()}\n
+#{getQueueData()}\n
 Type h for command help."
 			response.send resp.toString()
 			return
 
 		# Removing a person
 		when 'r', 'R'
+			console.log "->Remove person"
 			secondArg = (/([a-zA-Z]+)/g).exec(body)[1] # Grab the second argument given
 			resp = new twilio.TwimlResponse()
 			if not secondArg or secondArg.length isnt 1
@@ -134,13 +139,14 @@ Type h for command help."
 			queue.splice(queueIndex,1)
 
 			resp.message "Queue:\n
-{getQueueData()}\n
+#{getQueueData()}\n
 Type h for command help."
 			response.send resp.toString()
 			return
 
 		# Adding a person's kerberos
 		when 'i', 'I'
+			console.log "->insert person"
 			userName = (/([a-zA-Z]+)/g).exec(body)[1]
 			queuedUser =
 				name: userName
@@ -148,12 +154,13 @@ Type h for command help."
 			queue.push queuedUser
 			resp = new twilio.TwimlResponse()
 			resp.message "Queue:\n
-{getQueueData()}\n
+#{getQueueData()}\n
 Type h for command help."
 			response.send resp
 			return
 
-		when 'l', "L"
+		when 'l', 'L'
+			console.log "->List queue"
 			resp = new twilio.TwimlResponse()
 			unless queue.length > 0
 				resp.message "Queue is empty"
@@ -162,12 +169,13 @@ Type h for command help."
 			# list people in queue
 			resp = new twilio.TwimlResponse()
 			resp.message "Queue:\n
-{getQueueData()}\n
+#{getQueueData()}\n
 Type h for command help."
 			response.send resp
 			return
 
 		when 'h', 'H'
+			console.log "->show help"
 			# List commands
 			resp = new twilio.TwimlResponse()
 			resp.message "
@@ -183,13 +191,17 @@ add admin = add current phone to admin list"
 			return
 
 		else
+			console.log "->Unrecognzed command"
 			resp = new twilio.TwimlResponse()
 			resp.message "Unrecognized admin command. Use 'h' to fetch the list of possible commands."
 
 serveRegularSMS = (userPhoneNumber, body, request, response) ->
 
+	console.log "Regular user command:"
+
 	# If not, check if we should add this number to the admin list by checking for 'make admin'
 	if (/make admin/i).test(body)
+		console.log "->add admin"
 		admins.push userPhoneNumber
 		resp = new twilio.TwimlResponse()
 		resp.message "Admin phone number #{userPhoneNumber} added successfully to list of admins!"
@@ -199,7 +211,7 @@ serveRegularSMS = (userPhoneNumber, body, request, response) ->
 	# Check that they are not already in the queue
 	if userPlaceInQueue(userPhoneNumber)
 		resp = new twilio.TwimlResponse()
-		resp.message "You are already in the queue at place #{userPlaceInQueue(userPhoneNumber)}."
+		resp.message "You are already in the queue at place #{userPlaceInQueue(userPhoneNumber)}. Please wait your turn before re-adding yourself to the queue."
 		response.send resp.toString()
 		return
 
@@ -217,6 +229,8 @@ serveRegularSMS = (userPhoneNumber, body, request, response) ->
 		phoneNumber: userPhoneNumber
 	# Push the user onto the queue
 	queue.push queuedUser
+
+	console.log "->Add person to queue."
 
 	resp = new twilio.TwimlResponse()
 	resp.message "#{userName} is now in line. Current position: #{queue.length}.\n
