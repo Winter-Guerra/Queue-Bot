@@ -169,7 +169,7 @@ Type h for command help."
 			resp.message "Queue:\n
 #{getQueueData()}\n
 Type h for command help."
-			response.send resp.toString
+			response.send resp.toString()
 			return
 
 		when 'h', 'H'
