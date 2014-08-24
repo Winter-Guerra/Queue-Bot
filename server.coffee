@@ -234,7 +234,7 @@ app.post '/incomingSMS/', (request, response) ->
 	userPhoneNumber = request.param('From')
 	body = request.param('Body')
 
-	console.log "NEW SMS: ", userPhoneNumber, 
+	console.log "NEW SMS: ", userPhoneNumber, body
 
 
 	# Check if the incoming message originated from an admin phone
@@ -251,7 +251,7 @@ app.post '/incomingSMS/', (request, response) ->
 
 	# If we have an SMS from an admin phone
 	if isAdmin
-		serveAdminSMS(userPhoneNumber, 'wguerra')
+		serveAdminSMS(userPhoneNumber, userName, body, request, response)
 
 		
 
