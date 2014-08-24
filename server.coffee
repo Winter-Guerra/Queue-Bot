@@ -132,7 +132,7 @@ Type h for command help."
 			console.log "->Remove person"
 			name = body.match(/([a-zA-Z]+)/g)[1] # Grab the second argument given
 			resp = new twilio.TwimlResponse()
-			if not secondArg or name.length isnt 1
+			if not name or name.length isnt 1
 				resp.message "ERROR: Supply an queue index to delete. I.E. 'r b'"
 				response.send resp.toString()
 				return
