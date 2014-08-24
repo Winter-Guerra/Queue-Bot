@@ -33,6 +33,7 @@ admins = [
 queue = []
 oldTopQueue = []
 timeOfEachRide = 4 # minutes
+numberOfPeopletoUpdate = 5
 
 # List the top 5 users in the queue
 getQueueData = () ->
@@ -58,8 +59,6 @@ userPlaceInQueue = (phoneNumber) ->
 
 # Update the 5 people who are next in line.
 updateOperatorsAndUsers = () ->
-	numberOfPeopletoUpdate = 5
-
 	# Only update people if the queue has shifted.
 	topQueue = queue[0...numberOfPeopletoUpdate]
 
@@ -290,10 +289,14 @@ Standard message rates apply. Don't be dumbfuckers!
 	queue.push queuedUser
 
 	console.log "->Add person to queue."
-	ETA = queue.length * timeOfEachRide
 
+	ETA = queue.length * timeOfEachRide
 	resp = new twilio.TwimlResponse()
-	resp.message "
+
+	# Only confirm addition if the person is not at front of line. Otherwise, they will already get an update after they add themselves to the queue.
+	if queue.length > numberOfPeopletoUpdate
+
+		resp.message "
 #{userName} is now in line.\n
 Current position: #{queue.length}.\n
 ETA: #{ETA} minutes.\n
