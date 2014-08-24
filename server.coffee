@@ -90,7 +90,7 @@ updatePeopleInQueue = () ->
 	# h = help
 	# remove admin = remove current phone number from admin list
 
-serveAdminSMS = (userPhoneNumber, userName, body, request, response) ->
+serveAdminSMS = (userPhoneNumber, body, request, response) ->
 
 	# Check for "Remove Admin"
 	if (/remove admin/i).test(body)
@@ -177,7 +177,7 @@ add admin = add current phone to admin list"
 			response.send resp.toString()
 			return
 
-serveRegularSMS = (userPhoneNumber, userName, body, request, response) ->
+serveRegularSMS = (userPhoneNumber, body, request, response) ->
 
 	# If not, check if we should add this number to the admin list by checking for 'make admin'
 	if (/make admin/i).test(body)
@@ -244,14 +244,15 @@ app.post '/incomingSMS/', (request, response) ->
 	# Handle Regular user access
 
 	if not isAdmin
-		serveRegularSMS(userPhoneNumber, userName, body, request, response)
+		serveRegularSMS(userPhoneNumber, body, request, response)
 		return
 	# --------------------------
 	# Handle Admin access
 
 	# If we have an SMS from an admin phone
 	if isAdmin
-		serveAdminSMS(userPhoneNumber, userName, body, request, response)
+		serveAdminSMS(userPhoneNumber, body, request, response)
+		return
 
 		
 
