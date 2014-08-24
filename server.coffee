@@ -303,10 +303,8 @@ Standard message rates apply. Don't be dumbfuckers!
 "
 	response.send resp.toString()
 
-	# Send updates to the next 3 people in the queue
-	updatePeopleInQueue()
-	# Update Operators
-	updateOperators()
+	# Send updates to the operators and the users in the queue
+	updateOperatorsAndUsers()
 	return
 
 
