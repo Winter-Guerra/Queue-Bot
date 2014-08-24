@@ -76,16 +76,11 @@ updatePeopleInQueue = () ->
 			messageOptions = 
 				to: phoneNumber
 				from: serverPhoneNumber
-				body: "#{name}, you are now \##{placeInQueue} in line. Please find the EC roller coaster operators to get set up for your ride!"
+				body: "#{userName}, you are now \##{placeInQueue} in line. Please find the EC roller coaster operators to get set up for your ride!"
 
 			promise = client.sendMessage(messageOptions)
 			
-			.then( 
-				(call) ->
-					console.log('Call success! Call SID: '+call.sid)
-				,(call) ->
-					console.error('Call failed!  Reason: '+error.message)
-			)
+			.done()
 
 
 # Check which command the admin commanded us to do
