@@ -57,22 +57,25 @@ updatePeopleInQueue = () ->
 	for person in queue[0...3]
 		{phoneNumber, name} = person
 
-		# Find the user's place in the queue
-		placeInQueue = userPlaceInQueue(phoneNumber)
+		# Check that they actually have a phone that we can call them on.
+		if phoneNumber
 
-		messageOptions = 
-			to: phoneNumber
-			from: serverPhoneNumber
-			body: "#{name}, you are now \##{placeInQueue} in line. Please find the EC roller coaster operators to get set up for your ride!"
+			# Find the user's place in the queue
+			placeInQueue = userPlaceInQueue(phoneNumber)
 
-		promise = client.sendMessage(messageOptions)
-		
-		.then( 
-			(call) ->
-				console.log('Call success! Call SID: '+call.sid)
-			,(call) ->
-				console.error('Call failed!  Reason: '+error.message)
-		)
+			messageOptions = 
+				to: phoneNumber
+				from: serverPhoneNumber
+				body: "#{name}, you are now \##{placeInQueue} in line. Please find the EC roller coaster operators to get set up for your ride!"
+
+			promise = client.sendMessage(messageOptions)
+			
+			.then( 
+				(call) ->
+					console.log('Call success! Call SID: '+call.sid)
+				,(call) ->
+					console.error('Call failed!  Reason: '+error.message)
+			)
 
 
 # Check which command the admin commanded us to do
@@ -122,14 +125,14 @@ Type h for command help."
 		# Removing a person
 		when 'r', 'R'
 			console.log "->Remove person"
-			secondArg = (/([a-zA-Z]+)/g).exec(body)[1] # Grab the second argument given
+			name = body.match(/([a-zA-Z]+)/g)[1] # Grab the second argument given
 			resp = new twilio.TwimlResponse()
-			if not secondArg or secondArg.length isnt 1
+			if not secondArg or name.length isnt 1
 				resp.message "ERROR: Supply an queue index to delete. I.E. 'r b'"
 				response.send resp.toString()
 				return
 			# Map the letter to a zero indexed number
-			queueIndex = (secondArg.charCodeAt(0) - 97)
+			queueIndex = (name.charCodeAt(0) - 97)
 			queue.splice(queueIndex,1)
 
 			resp.message "Queue:\n
@@ -140,11 +143,11 @@ Type h for command help."
 
 		# Adding a person's kerberos
 		when 'i', 'I'
-			console.log "->insert person"
-			userName = (/([a-zA-Z]+)/g).exec(body)[1]
+			userName = body.match(/([a-zA-Z]+)/g)[1]
+			console.log "->insert person #{userName}"
 			queuedUser =
-				name: userName
-				phoneNumber: userPhoneNumber
+				name: userName.concat('* No cell')
+				phoneNumber: null # user does not have a phone number
 			queue.push queuedUser
 			resp = new twilio.TwimlResponse()
 			resp.message "Queue:\n
@@ -178,7 +181,7 @@ Commands:\n
 n = next\n
 l = list queue\n
 r n = remove nth person from list where n = a,b,c,d\n
-i name = insert name to end of list\n
+i name = insert name to end of list\n 
 h = help\n
 remove admin = remove current phone from admin list\n
 add admin = add current phone to admin list"
@@ -213,7 +216,7 @@ serveRegularSMS = (userPhoneNumber, body, request, response) ->
 
 	# Check that they supplied a name
 	userName = null
-	if (/[a-zA-Z]*/).test(body)
+	if (/[a-zA-Z]+/).test(body)
 		userName = body
 	else
 		# Since they did not supply a name, use their phone number
