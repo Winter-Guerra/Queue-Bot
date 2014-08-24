@@ -208,13 +208,14 @@ serveRegularSMS = (userPhoneNumber, body, request, response) ->
 		return
 
 	# Check that they are not already in the queue
-	if userPlaceInQueue(userPhoneNumber)
+	place = userPlaceInQueue(userPhoneNumber)
+	if place
 		resp = new twilio.TwimlResponse()
-		resp.message "You are already in the queue at place #{userPlaceInQueue(userPhoneNumber)}. Please wait your turn before re-adding yourself to the queue."
+		resp.message "You are already in the queue at place #{place}. Please wait your turn before re-adding yourself to the queue."
 		response.send resp.toString()
 		return
 
-	console.log "Existing place in queue:", userPlaceInQueue
+	console.log "Existing place in queue:", place
 
 	# Check that they supplied a name
 	userName = null
