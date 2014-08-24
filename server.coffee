@@ -49,7 +49,7 @@ userPlaceInQueue = (phoneNumber) ->
 	for index in [0...queue.length]
 		queuedNumber = queue[index].phoneNumber
 		
-		if phoneNumber in queuedNumber
+		if phoneNumber is queuedNumber
 			return index
 	return null
 
@@ -213,6 +213,8 @@ serveRegularSMS = (userPhoneNumber, body, request, response) ->
 		resp.message "You are already in the queue at place #{userPlaceInQueue(userPhoneNumber)}. Please wait your turn before re-adding yourself to the queue."
 		response.send resp.toString()
 		return
+
+	return "Existing place in queue:", userPlaceInQueue
 
 	# Check that they supplied a name
 	userName = null
