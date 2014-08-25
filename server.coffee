@@ -195,7 +195,8 @@ serveAdminSMS = (userPhoneNumber, body, request, response) ->
 				phoneNumber: null # user does not have a phone number
 			queue.push queuedUser
 
-			# Send empty response
+			# Send response
+			ETA = queue.length * timeOfEachRide
 			resp = new twilio.TwimlResponse()
 			resp.message "
 #{userName} is now in line.\n
@@ -362,6 +363,8 @@ app.post '/incomingSMS/', (request, response) ->
 		serveAdminSMS(userPhoneNumber, body, request, response)
 
 	console.log "Queue:", queue
+
+
 	return
 
 		
