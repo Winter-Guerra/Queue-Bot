@@ -29,6 +29,14 @@ admins = [
 	'+19073472182', # Jaguar
 ]
 
+cleanQueue = (queue) ->
+	i = 0
+	for user in queue
+		# Check that they all have return numbers
+		if not user.returnPhoneNumber
+			# Add a return phone number
+			user.returnPhoneNumber = serverPhoneNumbers[ i % serverPhoneNumbers.length ]
+
 # ## Initialize the Queue
 queue = []
 if fs.existsSync('./queue_save.json')
@@ -38,14 +46,6 @@ oldTopQueue = []
 timeOfEachRide = 8 # minutes
 numberOfPeopletoUpdate = 5
 totalPeopleQueued = 0
-
-cleanQueue = (queue) ->
-	i = 0
-	for user in queue
-		# Check that they all have return numbers
-		if not user.returnPhoneNumber
-			# Add a return phone number
-			user.returnPhoneNumber = serverPhoneNumbers[ i % serverPhoneNumbers.length ]
 
 
 # List the top 5 users in the queue
