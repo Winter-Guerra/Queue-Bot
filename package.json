@@ -18,7 +18,8 @@
     "mocha": "^1.21.4",
     "supertest": "^0.13.0",
     "twilio": "^1.6.0",
-    "wait": "^0.1.0"
+    "wait": "^0.1.0",
+    "pg": "3.x"
   },
   "devDependencies": {},
   "scripts": {
