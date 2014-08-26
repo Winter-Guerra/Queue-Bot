@@ -36,6 +36,7 @@ cleanQueue = (queue) ->
 		if not user.returnPhoneNumber
 			# Add a return phone number
 			user.returnPhoneNumber = serverPhoneNumbers[ i % serverPhoneNumbers.length ]
+		i++
 
 # ## Initialize the Queue
 queue = []
