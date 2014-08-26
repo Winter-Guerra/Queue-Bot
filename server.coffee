@@ -58,10 +58,10 @@ sendStartingMessage = (queue) ->
 			to: phoneNumber
 			from: returnPhoneNumber
 			body: "
-EC Roller Coaster queuing server has been restarted since WinterG is a bad sysadmin.\n
-The queuing server is now online. Your old place in line (\##{userPlaceInQueue(phoneNumber)}) has been restored."
+EC Roller Coaster queue server was restarted since WinterG is a bad sysadmin.\n
+The queue is now online. Your old place in line (\##{userPlaceInQueue(phoneNumber)}) has been restored."
 
-		client.sendMessage(messageOptions).done()
+		client.sendMessage(messageOptions).done(console.error)
 
 	# Send messages to ops
 	for op in admins
@@ -71,14 +71,14 @@ The queuing server is now online. Your old place in line (\##{userPlaceInQueue(p
 		body: "
 EC Roller Coaster queuing server has been restarted since WinterG is a bad sysadmin.\n
 The queuing server is now online. All old places have been restored."
-	client.sendMessage(messageOptions).done()
+	client.sendMessage(messageOptions).done(console.error)
 
 # ## Initialize the Queue
 queue = []
 if fs.existsSync('./queue_save.json')
 	{queue} = fs.readJsonSync('./queue_save.json')
 	cleanQueue(queue)
-	sendStartingMessage(queue)
+	#sendStartingMessage(queue)
 oldTopQueue = []
 timeOfEachRide = 8 # minutes
 numberOfPeopletoUpdate = 5
@@ -129,7 +129,7 @@ Please find a EC roller coaster operator to get set up for your ride!\n
 We are on the 2nd floor of the EC fort, near the entrance stairs.\n
 WARNING: If not present, you will be removed from the queue."
 
-				client.sendMessage(messageOptions).done()
+				client.sendMessage(messageOptions).done(console.error)
 
 		# Update the operators
 		for operatorNumber in admins
@@ -142,7 +142,7 @@ Queue updated!\r\n
 #{getQueueData()}\r\n
 Type h for command help."
 
-			client.sendMessage(messageOptions).done()
+			client.sendMessage(messageOptions).done(console.error)
 
 sendRemovalMsgToUser = (user) ->
 	if user
@@ -157,7 +157,7 @@ sendRemovalMsgToUser = (user) ->
 Please find the operators if you think that this has been a mistake.\r\n
 Otherwise, text your kerberos to this number to ride again!
 "
-			client.sendMessage(messageOptions).done()
+			client.sendMessage(messageOptions).done(console.error)
 
 
 # Check which command the admin commanded us to do
