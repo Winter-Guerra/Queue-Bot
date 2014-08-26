@@ -29,6 +29,16 @@ admins = [
 	'+19073472182', # Jaguar
 ]
 
+# Check the user's place in the queue
+userPlaceInQueue = (phoneNumber) ->
+	# Loop through queue and look for the phoneNumber
+	for index in [0...queue.length]
+		queuedNumber = queue[index].phoneNumber
+		
+		if phoneNumber is queuedNumber
+			return index+1
+	return null
+
 cleanQueue = (queue) ->
 	i = 0
 	for user in queue
@@ -86,16 +96,6 @@ getQueueData = () ->
 #{letterIndex}). #{user.userName}"
 
 	return returnString
-
-# Check the user's place in the queue
-userPlaceInQueue = (phoneNumber) ->
-	# Loop through queue and look for the phoneNumber
-	for index in [0...queue.length]
-		queuedNumber = queue[index].phoneNumber
-		
-		if phoneNumber is queuedNumber
-			return index+1
-	return null
 
 
 # Update the 5 people who are next in line.
