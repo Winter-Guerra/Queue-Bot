@@ -22,13 +22,6 @@ port = process.env.PORT || 3000
 
 client = new twilio.RestClient(accountSid, authToken)
 
-# ## Default Admin Numbers
-
-admins = [
-	'+19174357128', # Winter
-	'+19073472182', # Jaguar
-]
-
 # Check the user's place in the queue
 userPlaceInQueue = (phoneNumber) ->
 	# Loop through queue and look for the phoneNumber
@@ -48,7 +41,19 @@ cleanQueue = (queue) ->
 			user.returnPhoneNumber = serverPhoneNumbers[ i % serverPhoneNumbers.length ]
 		i++
 
-sendStartingMessage = (queue) ->
+sendStartingMessageToAdmins = (queue) ->
+	# Announce that server has rebooted
+	# Send messages to ops
+	for op in admins
+		messageOptions = 
+		to: op
+		from: serverPhoneNumbers[0]
+		body: "
+EC Roller Coaster queuing server restarted since WinterG is a bad sysadmin.\n
+The server is now online. All old places have been restored."
+		client.sendMessage(messageOptions).done(null,console.error)
+
+sendStartingMessageToUsers = (queue) ->
 	# Announce that server has rebooted
 	for user in queue
 
@@ -61,24 +66,26 @@ sendStartingMessage = (queue) ->
 EC Roller Coaster queue server was restarted since WinterG is a bad sysadmin.\n
 The queue is now online. Your old place in line (\##{userPlaceInQueue(phoneNumber)}) has been restored."
 
-		client.sendMessage(messageOptions).done(console.error)
+		client.sendMessage(messageOptions).done(null,console.error)
 
-	# Send messages to ops
-	for op in admins
-		messageOptions = 
-		to: op
-		from: serverPhoneNumbers[0]
-		body: "
-EC Roller Coaster queuing server has been restarted since WinterG is a bad sysadmin.\n
-The queuing server is now online. All old places have been restored."
-	client.sendMessage(messageOptions).done(console.error)
+# ## Default Admin Numbers
+
+admins = [
+	'+19174357128', # Winter
+	'+19073472182', # Jaguar
+	'+16785922741'  # Ben Katz
+]
+
 
 # ## Initialize the Queue
 queue = []
 if fs.existsSync('./queue_save.json')
 	{queue} = fs.readJsonSync('./queue_save.json')
 	cleanQueue(queue)
-	#sendStartingMessage(queue)
+	# Update the sysadmins when the server reboots
+	wait 300, () ->
+		sendStartingMessageToAdmins(queue)
+		#sendStartingMessageToUsers(queue)
 oldTopQueue = []
 timeOfEachRide = 8 # minutes
 numberOfPeopletoUpdate = 5
@@ -129,7 +136,7 @@ Please find a EC roller coaster operator to get set up for your ride!\n
 We are on the 2nd floor of the EC fort, near the entrance stairs.\n
 WARNING: If not present, you will be removed from the queue."
 
-				client.sendMessage(messageOptions).done(console.error)
+				client.sendMessage(messageOptions).done(null,console.error)
 
 		# Update the operators
 		for operatorNumber in admins
@@ -142,7 +149,7 @@ Queue updated!\r\n
 #{getQueueData()}\r\n
 Type h for command help."
 
-			client.sendMessage(messageOptions).done(console.error)
+			client.sendMessage(messageOptions).done(null,console.error)
 
 sendRemovalMsgToUser = (user) ->
 	if user
@@ -153,11 +160,11 @@ sendRemovalMsgToUser = (user) ->
 				to: user.phoneNumber
 				from: returnPhoneNumber
 				body: "
-#{userName}, you've been removed from the EC roller coaster queue!\r\n
-Please find the operators if you think that this has been a mistake.\r\n
-Otherwise, text your kerberos to this number to ride again!
+#{userName}, you've been removed from the queue!\r\n
+Tell ops if you think this has been a mistake.\r\n
+Else, txt your kerberos to this # to ride again!
 "
-			client.sendMessage(messageOptions).done(console.error)
+			client.sendMessage(messageOptions).done(null,console.error)
 
 
 # Check which command the admin commanded us to do
@@ -320,10 +327,10 @@ serveRegularSMS = (userPhoneNumber, body, request, response) ->
 		ETA = place * timeOfEachRide
 		resp = new twilio.TwimlResponse()
 		resp.message "
-You are already in line at place #{place}.\r\n
-ETA: #{ETA} minutes\r\n
-Please wait your turn before re-adding yourself to the queue.\r\n
-Standard message rates apply. Don't be dumbfuckers!
+You are already in line @ #{place}.\r\n
+ETA: #{ETA} mins\r\n
+Please wait before re-adding yourself.\r\n
+Std msg rates apply. Don't be dumbfuckers!
 "
 		response.send resp.toString()
 		return
@@ -358,10 +365,10 @@ Standard message rates apply. Don't be dumbfuckers!
 #{userName} is now in line.\n
 Current position: #{queue.length}.\n
 ETA: #{ETA} minutes.\n
-ENJOY THE PARTY! We will text you when you can ride the EC roller coaster.\n
+We'll txt you when you can ride the EC roller coaster.\n
 WARNING: If not present, you will be removed from the queue.\n
 Check your ETA by texting us your kerberos again.\n
-Standard message rates apply. Don't be dumbfuckers!
+Std msg rates apply.
 "
 	response.send resp.toString()
 
