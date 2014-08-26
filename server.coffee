@@ -38,11 +38,37 @@ cleanQueue = (queue) ->
 			user.returnPhoneNumber = serverPhoneNumbers[ i % serverPhoneNumbers.length ]
 		i++
 
+sendStartingMessage = (queue) ->
+	# Announce that server has rebooted
+	for user in queue
+
+		{phoneNumber, userName, returnPhoneNumber} = user
+
+		messageOptions = 
+			to: phoneNumber
+			from: returnPhoneNumber
+			body: "
+EC Roller Coaster queuing server has been restarted since WinterG is a bad sysadmin.\n
+The queuing server is now online. Your old place in line (\##{userPlaceInQueue(phoneNumber)}) has been restored."
+
+		client.sendMessage(messageOptions).done()
+
+	# Send messages to ops
+	for op in admins
+		messageOptions = 
+		to: op
+		from: serverPhoneNumbers[0]
+		body: "
+EC Roller Coaster queuing server has been restarted since WinterG is a bad sysadmin.\n
+The queuing server is now online. All old places have been restored."
+	client.sendMessage(messageOptions).done()
+
 # ## Initialize the Queue
 queue = []
 if fs.existsSync('./queue_save.json')
 	{queue} = fs.readJsonSync('./queue_save.json')
 	cleanQueue(queue)
+	sendStartingMessage(queue)
 oldTopQueue = []
 timeOfEachRide = 8 # minutes
 numberOfPeopletoUpdate = 5
