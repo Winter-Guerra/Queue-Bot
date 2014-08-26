@@ -1,5 +1,7 @@
 {
 	"accountSid":"ACf26fb9d8bb186cb68cd4d92617bb246d",
 	"authToken":"8460ccf26c063582260903287cf3c164",
-	"serverPhoneNumber":"+13478096457"
+	"serverPhoneNumbers":[
+	"+13478096457",
+	"+17402491536"]
 }

@@ -18,7 +18,7 @@ _ = require('lodash')
 port = process.env.PORT || 3000
 
 # Initialize Twilio API
-{accountSid, authToken, serverPhoneNumber} = fs.readJsonSync('./twilio_account_info.json')
+{accountSid, authToken, serverPhoneNumbers} = fs.readJsonSync('./twilio_account_info.json')
 
 client = new twilio.RestClient(accountSid, authToken)
 
@@ -31,9 +31,12 @@ admins = [
 
 # ## Initialize the Queue
 queue = []
+if fs.existsSync('./queue_save.json')
+	{queue} = fs.readJsonSync('./queue_save.json')
 oldTopQueue = []
 timeOfEachRide = 8 # minutes
 numberOfPeopletoUpdate = 5
+totalPeopleQueued = 0
 
 # List the top 5 users in the queue
 getQueueData = () ->
@@ -57,6 +60,10 @@ userPlaceInQueue = (phoneNumber) ->
 			return index+1
 	return null
 
+addUser = (userName, phoneNumber) ->
+	# Find which response number to assign to this person
+
+
 # Update the 5 people who are next in line.
 updateOperatorsAndUsers = () ->
 	# Only update people if the queue has shifted.
@@ -68,7 +75,7 @@ updateOperatorsAndUsers = () ->
 
 		# Update the users in the top of the queue
 		for person in queue[0...numberOfPeopletoUpdate]
-			{phoneNumber, userName} = person
+			{phoneNumber, userName, returnPhoneNumber} = person
 
 			# Check that they actually have a phone that we can call them on.
 			if phoneNumber
@@ -80,7 +87,7 @@ updateOperatorsAndUsers = () ->
 
 				messageOptions = 
 					to: phoneNumber
-					from: serverPhoneNumber
+					from: returnPhoneNumber
 					body: "
 #{userName}, you are now \##{placeInQueue} in line.\r\n
 ETA: #{ETA} minutes.\n
@@ -95,7 +102,7 @@ WARNING: If not present, you will be removed from the queue."
 			
 			messageOptions = 
 				to: operatorNumber
-				from: serverPhoneNumber
+				from: returnPhoneNumber
 				body: "
 Queue updated!\r\n
 #{getQueueData()}\r\n
@@ -106,11 +113,11 @@ Type h for command help."
 sendRemovalMsgToUser = (user) ->
 	if user
 		if user.phoneNumber
-			{phoneNumber, userName} = user
+			{phoneNumber, userName, returnPhoneNumber} = user
 
 			messageOptions = 
 				to: user.phoneNumber
-				from: serverPhoneNumber
+				from: returnPhoneNumber
 				body: "
 #{userName}, you've been removed from the EC roller coaster queue!\r\n
 Please find the operators if you think that this has been a mistake.\r\n
@@ -188,11 +195,13 @@ serveAdminSMS = (userPhoneNumber, body, request, response) ->
 
 		# Adding a person's kerberos
 		when 'i', 'I'
+			totalPeopleQueued++
 			userName = body.match(/([a-zA-Z]+)/g)[1]
 			console.log "->insert person #{userName}"
 			queuedUser =
 				userName: userName.concat('* No cell')
 				phoneNumber: null # user does not have a phone number
+				returnPhoneNumber: serverPhoneNumbers[totalPeopleQueued%serverPhoneNumbers.length]
 			queue.push queuedUser
 
 			# Send response
@@ -269,6 +278,8 @@ serveRegularSMS = (userPhoneNumber, body, request, response) ->
 
 	# ADD USER TO QUEUE
 
+	totalPeopleQueued++
+
 	# Check that they are not already in the queue
 	place = userPlaceInQueue(userPhoneNumber)
 	if place isnt null
@@ -297,6 +308,7 @@ Standard message rates apply. Don't be dumbfuckers!
 	queuedUser =
 		userName: userName
 		phoneNumber: userPhoneNumber
+		returnPhoneNumber: serverPhoneNumbers[totalPeopleQueued%serverPhoneNumbers.length]
 	# Push the user onto the queue
 	queue.push queuedUser
 
