@@ -1,5 +1,6 @@
 {
-	"queue": [{ "userName": "Anpere",
+	"queue": [
+	{ "userName": "Anpere",
      "phoneNumber": "+15163593210",
      "returnPhoneNumber": "+13478096457" },
 { "userName": "ava_chen",
@@ -68,8 +69,7 @@
 { "userName": "spanjers",
      "phoneNumber": "+15052886514",
      "returnPhoneNumber": "+13478096457" },
-2014-08-26T03:23:13.235652+00:00 app[web.1]
-:   { "userName": "Tksafrit",
+     { "userName": "Tksafrit",
      "phoneNumber": "+13106947979",
      "returnPhoneNumber": "+17402491536" },
 { "userName": "Crysp",
